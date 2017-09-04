@@ -1,0 +1,105 @@
+Up: a lightweight server for the Ostatus protocol.
+
+Daniel Wilkins
+
+Background
+
+Ostatus is what I call a meta-protocol: it defines a way for servers to
+communicate posts across the web using technologies which (mostly)
+already existed and were adopted for various other purposes at the time,
+such as Salmon and PuSH, and put them together in a way which enabled a
+federated micro-blogging service.
+
+Its original implementation, Statusnet, had its first flagship instance
+launched as laconi.ca, then later as identi.ca, and it was heavily used
+within the Free/Libre and Open Source Software (FLOSS) world, with
+organizations like the Free Software Foudation, Redhat, and Mozilla all
+having instances of their own at one time or another. Eventually the
+compay behind Statusnet moved on to another project and left Statusnet
+to the GNU project, where it became GNU Social. Some time later, Eugen
+Rochko (gargron) wrote Mastodon, another compatible server which has
+been gaining some traction, featured on tech sites like BoingBoing,
+Soylent News, and Slashdot, particularly among those who have left
+Twitter. The technology has been in use for 7 years at this point and is
+well-proven.
+
+The problem with these existing servers, however, is that they are not
+what I would call easy to deploy: mastodon has fairly high requirements
+which make home-hosting fairly impractical (the installation guide
+suggests that a typical instance will use about 2GB of RAM), meaning
+that many old computers and more recent SoC systems such as Raspberry
+Pis and Beaglebones will be low on memory running _just_ Mastodon. GNU
+Social has its own deployment problems, I know from experience that
+certain parts of setting it up can be tricky, such as the rewrite rules
+which allow pretty URLs (/user/foo rather than /index.php?q=user/foo or
+similar) can be somewhat picky and one can easily lose federation if the
+“queue daemons” die or simply aren’t restarted. Both of them also
+require a proper database such as MariaDB or Postgres, meaning that the
+user needs to know how to set up and create the databases/users for such
+a database. I still need to look up the SQL dance for creating a new
+database, a corresponding user, and granting the proper rights: create
+user foo identified by ‘bar’? Identified by PASSWORD(‘bar’)? Grant all
+on ‘database’ to ‘foo’ identified by ‘bar’? Is that last part redundant?
+The process could be simplified greatly by using sqlite, even if some
+raw performance is lost.
+
+The primary beneficiaries of this would be those who want a small
+instance of their own without dedicating many resources to it which they
+may be using for other purposes, such as a home file server, which
+benefits greatly from large amounts of file caching. Personally, my
+server is running both types of file service (SMB and NFS), HTTP, SSH,
+IRC, and several game servers; I want each piece to use few resources so
+that the whole has enough.
+
+Project Idea
+
+The project consists of developing an Ostatus server which is compatible
+with at least a common subset of what is supported by other servers such
+as Social and Mastodon while staying within reasonable hardware and
+software requirements. It should consist of the following features:
+
+* Text posts. These are analogous to tweets or public facebook posts.
+They consist of text messages of a length usually set by the operator of
+the site, traditionally 140 or 500 characters.
+* Followers/Following. The ability to ‘subscribe’ to other users,
+wherein that user’s post will appear in my timeline.
+* Tagging. The ability to send a message to someone with
+@someone@some.instance even if there is no follower/followee
+relationship.
+* Federation. All of the above features should work at least as well as
+they do on the other implementations of the protocol when the features
+are used across servers (in a federated way). That is, if I’m
+@wilkinsdl@up.appstate.edu, I should be able to subscribe to my friends
+@jacksonak2@mastodon.ncsu.edu and @fantlf@social.unc.edu and vice versa.
+This is the part which is most likely to cause problems, as the protocol
+is intentionally vague. Thankfully it’s easy to get ahold of people who
+have implemented these and ask them about how things are supposed to be
+implemented; I also _have_ a GNU Social instance which I can look at for
+reference.
+* Minimal-as-possible footprint. Ideally I would like this to run
+reasonably well on my Raspberry Pi 2 with a minimum of fuss.
+
+Stretch Goals
+
+* Web interface. I never use web interfaces but it would be a natural
+feature to have, even if it is also a natural feature to cut due to the
+ubiquity of clients among users of these platforms. Some amount of web
+interface is required regardless, I think, due to how subscriptions
+work.
+* API Compatibility. Both Mastodon and Social have their own APIs and
+clients made to use them. While a simpler web API will probably do for
+the time being, the ability to use existing clients rather than writing
+my own or just using CURL would be useful. Which API it would be, Social
+(the twitter v1 API) or Mastodon (its own API) would be decided when/if
+the time comes.
+* Other post types. Polls are a useful ‘quirk’ of GNU Social, but I
+think that the ability to create a poll within the system itself rather
+than relying on an outside site is useful. Similarly, I can see the
+value in being able to just upload, say, a picture and have it work
+across instances (I believe Mastodon implements this.)
+* Blocking. This is the opposite of following: prevent messages from the
+blocked user from reaching the blocker even if the blocker is tagged
+(using @name) or in a group with the blocked user.
+* Tags. The ability to affix a tag to a message with #tag. You should be
+able to retrieve all of the messages known on the instance to be tagged
+with that particular tag.
