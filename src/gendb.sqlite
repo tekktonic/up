@@ -1,0 +1,1 @@
+create table posts (id string primary key, post string);
