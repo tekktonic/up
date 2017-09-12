@@ -7,9 +7,8 @@ import (
 	"github.com/husobee/vestigo"
 	"github.com/kr/pretty"
 	"math/rand"
+	"mime/multipart"
 	"log"
-	//	"os"
-//	"strings"
 	"time"
 	"fmt"
 )
@@ -44,12 +43,17 @@ func GetHandler(w http.ResponseWriter, request *http.Request){
 	rows, err := sqlh.Query("select post from posts where id = ?", id)
 	errCheck(err)
 
+	defer rows.Close()
 	// Since we selected on the key the result is unambiguous...
 	var post string
 	// Safe because we selected on primary key, only 1 post
 	rows.Next()
 	err = rows.Scan(&post)
-	errCheck(err)
+	if (err != nil) {
+		w.WriteHeader(404);
+		w.Write(([]byte)("Paste not found."))
+		return
+	}
 	
 	w.Header().Set("Content-Type", "text/plain")
 	w.WriteHeader(200);
@@ -59,8 +63,23 @@ func GetHandler(w http.ResponseWriter, request *http.Request){
 
 func PostHandler(w http.ResponseWriter, request *http.Request) {
 
-	request.ParseForm()
+	maxsize := (int64)(2 << 21)
+	request.ParseMultipartForm(maxsize)
 
+	var file multipart.File
+	var h *multipart.FileHeader
+	var err error
+	file, h, err = request.FormFile("post")
+
+	if (h.Size > (2 << 21)) {
+		w.WriteHeader(500)
+		w.Write(([]byte)("Too big"))
+		return;
+	}
+	rawdata := make([]byte, h.Size)
+
+	file.Read(rawdata)
+	
 //	fmt.Println(request.PostForm)
 	
 	if (sqlh == nil) { fmt.Println("EVERYTHING IS RUINED"); return}
@@ -76,12 +95,17 @@ func PostHandler(w http.ResponseWriter, request *http.Request) {
 	}
 	
 	defer insert.Close()
+	
+	// Only one key we need to extract, apparently best way.
+//	for k := range request.PostMultipartForm {
+//		post = k
+	//	}
 
-//	data := strings.Join(request.PostForm[0], "")
-
-	pretty.Println(request.PostForm)
+	data := (string)(rawdata)
+	pretty.Println(data)
+//	pretty.Println((string)(request.PostFormValue("post")))
 	key := genKey()
-//	_, err = insert.Exec(key, data);
+	_, err = insert.Exec(key, data);
 
 	if (err != nil) {
 		log.Fatal(err)
@@ -92,28 +116,29 @@ func PostHandler(w http.ResponseWriter, request *http.Request) {
 		log.Fatal(err)
 	}
 
-	w.Header().Set("Location", "/" + key)
-	w.WriteHeader(303)
+	w.Write(([]byte)(key + "\r\n"))
+
 	
 }
 
 func main() {
 	var err error
+	fmt.Println("Opening db");
 	sqlh, err = sql.Open("sqlite3", "pastebin.db")
 
 	if (err != nil) {
 		log.Fatal(err)
 	}
-	err = sqlh.Ping()
-	if (err != nil) {
-		log.Fatal(err)
-	}
 
+		fmt.Println("Creating vestigo")
 	router := vestigo.NewRouter()
-
+	fmt.Println("Registering get..")
 	router.Get("/:postid", GetHandler)
-	router.Put("/", PostHandler)
-	http.ListenAndServe(":8000", router)
+		fmt.Println("Registering post..")
+	router.Post("/", PostHandler)
+
+	fmt.Println("Trying to serve..")
+	http.ListenAndServe(":8080", router)
 
 	sqlh.Close()
 }
