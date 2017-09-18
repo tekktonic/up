@@ -5,12 +5,12 @@ import (
 	"database/sql"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/husobee/vestigo"
-	"github.com/kr/pretty"
 	"math/rand"
 	"mime/multipart"
 	"log"
 	"time"
 	"fmt"
+	"golang.org/x/sys/unix"
 )
 
 var sqlh *sql.DB
@@ -27,7 +27,6 @@ func genKey() string {
 	}
 	realret := string(ret[:])
 	
-	fmt.Println(realret)
 	return realret
 }
 
@@ -38,8 +37,10 @@ func errCheck(e error) {
 }
 
 func GetHandler(w http.ResponseWriter, request *http.Request){
+
+	// DIRTY NAUGHTY HACK: ListenAndServe does naughty things with setsockopt, can't pledge before we start serving.
+	unix.Pledge("stdio inet rpath unix", []string{"./pastebin.db"})
 	id := vestigo.Param(request, "postid");
-	fmt.Println(id)
 	rows, err := sqlh.Query("select post from posts where id = ?", id)
 	errCheck(err)
 
@@ -55,13 +56,15 @@ func GetHandler(w http.ResponseWriter, request *http.Request){
 		return
 	}
 	
-	w.Header().Set("Content-Type", "text/plain")
+	w.Header().Set("Content-Type", "text/plain; charset=UTF-8")
 	w.WriteHeader(200);
 
 	w.Write([]byte(post))
 }
 
 func PostHandler(w http.ResponseWriter, request *http.Request) {
+	// DIRTY NAUGHTY HACK: ListenAndServe does naughty things with setsockopt, can't pledge before we start serving.
+	unix.Pledge("stdio inet rpath unix", []string{"./pastebin.db"})
 
 	maxsize := (int64)(2 << 21)
 	request.ParseMultipartForm(maxsize)
@@ -102,7 +105,6 @@ func PostHandler(w http.ResponseWriter, request *http.Request) {
 	//	}
 
 	data := (string)(rawdata)
-	pretty.Println(data)
 //	pretty.Println((string)(request.PostFormValue("post")))
 	key := genKey()
 	_, err = insert.Exec(key, data);
@@ -130,7 +132,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-		fmt.Println("Creating vestigo")
+	fmt.Println("Creating vestigo")
 	router := vestigo.NewRouter()
 	fmt.Println("Registering get..")
 	router.Get("/:postid", GetHandler)
@@ -138,7 +140,8 @@ func main() {
 	router.Post("/", PostHandler)
 
 	fmt.Println("Trying to serve..")
-	http.ListenAndServe(":8080", router)
+
+	http.ListenAndServe(":8000", router)
 
 	sqlh.Close()
 }
