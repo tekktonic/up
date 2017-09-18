@@ -2,13 +2,23 @@
 
 ## Daniel Wilkins
 
+
+
 ### Definitions
 There are a couple terms defined by the community that I'll be making use of here, some of which have their names for historical reasons; this is mainly so that if I 'accidentally' use the community terms my meaning is clear:
+
 Dent: A message sent via OStatus. Derived from the original (now defunct) OStatus instance, iDENTi.ca.
+
+Instance: A server running an OStatus compatible server.
+
 Federation: Communication with the other servers in the 'fediverse'(below) so that it (mostly) does not matter whether everyone is on a single instance or multiple. Essentially the exchanging of posts and other status updates between servers.
+
 Fediverse: All of the OStatus servers on the web, regardless of their specific implementation, be it GNU Social, Mastodon, Postactiv, etc.
+
 MUST, SHOULD, MAY: borrowed from RFCs; MUST is required, SHOULD is recommended, MAY is optional. Think of these as categories A, B, and C.
+
 Social: [GNU Social](http://gnu.io)
+
 
 
 ### Project Overview

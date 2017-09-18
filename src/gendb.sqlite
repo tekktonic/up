@@ -1,0 +1,11 @@
+-- Pretty sure that at the moment this is all we need for local.
+create table posts (id string primary key, author string, post string, datetime integer);
+create table tags (postid string, tagname string key, foreign key (postid) references posts(id), primary key (postid, tagname));
+
+-- Some OStatus prep:
+-- Fullname will be our user@instance
+-- I believe these tables should hold all of the relevant information for what Up wants to do. Since we have no web interface there's
+-- No point in holding bios, etc.
+create table remotes (fullname string primary key, feedurl string, pushurl string, salmonurl string, avatarurl string, following int, follower int)
+
+-- So a post is going to be somethig like "select pushurl from remotes where following=1" and then our usual ostatus magic.
