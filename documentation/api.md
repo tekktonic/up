@@ -19,7 +19,18 @@ The server should serve one or two (I still can't figure out whether the follow 
 ## API Methods
 All API methods are going to be gated behind authentication.
 
+Post Format: When the server's sending a post, to make clients easier it'll be of this form:
+author
+date
+["in reply to " replyto]
+\r\n
+post content...
+\r\n\r\n
+
+Eventually it'll be wrapped in json when I have a client that can parse json.
+
 They take the following form:
+
 name|method|args: explanation.
 
 post|POST|text: Submit a new text post. Posts are currently just plain text, but with client support I would consider accepting markdown and converting between formats as necessary. The sizes involved (relatively small) mean that a simple query parameter ?text= should be sufficient.
