@@ -5,7 +5,7 @@ import (
 	"log"
 	"fmt"
 	"time"
-//	"json"
+	"encoding/json"
 )
 
 type post struct {
@@ -15,6 +15,11 @@ type post struct {
 	favorites int
 	replyto string
 	datetime time.Time
+}
+
+type jsonpost struct {
+	post string "json:post"
+	replyto string "json:replyto"
 }
 
 func Put(dbh *sql.DB, p *post) (string, error) {
@@ -87,7 +92,7 @@ func Get(dbh *sql.DB, id string) (*post, error) {
 	return &ret, nil
 }
 
-func String(p *post) string {
+func (p post) String() string {
 	var ret string
 	var part2ret string
 	partret := p.author + "\r\n" + p.datetime.Format(time.UnixDate) + "\r\n";
@@ -101,4 +106,16 @@ func String(p *post) string {
 	ret = part2ret + "\r\n" + p.post + "\r\n\r\n"
 
 	return ret
+}
+
+func FromJSON(in []byte) post {
+	jsonresult := jsonpost{}
+
+	err := json.Unmarshal(in, &jsonresult)
+	if ((err != nil)) {
+		log.Fatal(err)
+	}
+
+	return post{}
+	
 }

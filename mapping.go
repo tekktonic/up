@@ -3,8 +3,10 @@ package main;
 import (
 	"net/http"
 )
-/*
-var mappings = map[string]Handler {
-	"/post/:id" : PermalinkCB
+
+var getCallbacks = map[string]func(http.ResponseWriter, *http.Request) {
+	"/post/:id" : PermalinkCB,
+//	"/timeline/:max" : TimelineCB,
 }
-*/
+
+var postCallbacks = map[string]http.Handler {}

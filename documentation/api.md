@@ -38,3 +38,7 @@ post|POST|text: Submit a new text post. Posts are currently just plain text, but
 timeline|GET|max: Fetch the most recent $max posts from the user's timeline, return them in the form of a JSON array ordered in reverse-chronological (newest first) order of post objects (defined later.) If no max is given the server should choose a sane default (configurable?)
 
 reply|POST|to,text: Post a comment in reply to 
+
+follow|POST|id: Follow the user at the webfinger id id.
+
+favorite|POST|id: Favorite the post with the id id.
