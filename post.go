@@ -1,14 +1,16 @@
 package main
 
 import (
+	"container/list"
 	"database/sql"
 	"log"
 	"fmt"
+	"strconv"
 	"time"
 	"encoding/json"
 )
 
-type post struct {
+type Post struct {
 	id string
 	author string
 	post string
@@ -18,11 +20,11 @@ type post struct {
 }
 
 type jsonpost struct {
-	post string "json:post"
-	replyto string "json:replyto"
+	Post string `json:"post"`
+	Replyto string `json:"replyto"`
 }
 
-func Put(dbh *sql.DB, p *post) (string, error) {
+func Put(dbh *sql.DB, p *Post) (string, error) {
 	// 1 in 144 quadrillion is *probably* safe
 	p.id = keyGen(10)
 
@@ -66,7 +68,7 @@ func Put(dbh *sql.DB, p *post) (string, error) {
 	return p.id, nil;
 }
 
-func Get(dbh *sql.DB, id string) (*post, error) {
+func Get(dbh *sql.DB, id string) (*Post, error) {
 	fmt.Println("Grabbing post with id " + id)
 	sel, err := dbh.Query("select * from posts where id = ?", id)
 
@@ -76,7 +78,7 @@ func Get(dbh *sql.DB, id string) (*post, error) {
 
 	defer sel.Close();
 	
-	var ret post
+	var ret Post
 
 	// Safe, selected on primary key
 	sel.Next()
@@ -92,7 +94,38 @@ func Get(dbh *sql.DB, id string) (*post, error) {
 	return &ret, nil
 }
 
-func (p post) String() string {
+func Timeline(dbh *sql.DB, max int) *list.List {
+	ret := list.New()
+
+	// Safe, max has been verified as sane at this point.
+	sel, err := dbh.Query("select * from posts order by datetime desc limit " + strconv.Itoa(max))
+
+	if (err != nil) {
+		log.Fatal("Something went horribly wrong in retrieving the timeline")
+	}
+
+	defer sel.Close()
+
+	for sel.Next() {
+		var item Post
+		var stringtime string
+		err = sel.Scan(&item.id, &item.author, &item.post,
+			&item.favorites, &item.replyto, &stringtime)
+
+		if (err != nil) {
+			log.Fatal("Database somehow corrupted")
+		}
+
+		item.datetime, _ = time.Parse(time.UnixDate, stringtime)
+
+		// Have things in reverse order so that when we print them the most recent is at the bottom
+		ret.PushFront(item)
+	}
+
+	return ret
+}
+
+func (p Post) String() string {
 	var ret string
 	var part2ret string
 	partret := p.author + "\r\n" + p.datetime.Format(time.UnixDate) + "\r\n";
@@ -108,7 +141,7 @@ func (p post) String() string {
 	return ret
 }
 
-func FromJSON(in []byte) post {
+func FromJSON(in []byte) Post {
 	jsonresult := jsonpost{}
 
 	err := json.Unmarshal(in, &jsonresult)
@@ -116,6 +149,6 @@ func FromJSON(in []byte) post {
 		log.Fatal(err)
 	}
 
-	return post{}
+	return Post{}
 	
 }

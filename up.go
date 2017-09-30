@@ -26,7 +26,7 @@ func main() {
 	// Our context needs the handle so that it can get pushed around in our 
 	ctx.dbh = dbh
 	
-	post := post{id: "", author: "tekk@up.tekk.in", post: "all is bad", favorites: 0, replyto: ""}
+	post := Post{id: "", author: "tekk@up.tekk.in", post: "all is bad", favorites: 0, replyto: ""}
 
 	fmt.Println(post);
 	
