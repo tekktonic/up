@@ -6,7 +6,7 @@ import (
 
 	"net/http"
 	"github.com/husobee/vestigo"
-	"fmt"
+
 	"log"
 )
 
@@ -26,15 +26,6 @@ func main() {
 	// Our context needs the handle so that it can get pushed around in our 
 	ctx.dbh = dbh
 	
-	post := Post{id: "", author: "tekk@up.tekk.in", post: "all is bad", favorites: 0, replyto: ""}
-
-	fmt.Println(post);
-	
-	id, _ := Put(dbh, &post);
-	fmt.Println("trying to retrieve");
-	gotten,_ := Get(dbh,id);
-	fmt.Print(gotten)
-
 	router := vestigo.NewRouter()
 	
 	// Set up our URL handlers. See <<mapping.go>>

@@ -2,8 +2,9 @@ package main;
 
 import (
 	"fmt"
-
+	"strings"
 	"net/http"
+	"log"
 )
 
 func PostCB (w http.ResponseWriter, r *http.Request) {
@@ -24,7 +25,7 @@ func PostCB (w http.ResponseWriter, r *http.Request) {
 			return;
 		}
 		
-/*		entry := NewPost(post)
+		entry := NewPost(strings.Join(post, " "))
 
 		id, err := Put(ctx.dbh, &entry)
 
@@ -33,7 +34,6 @@ func PostCB (w http.ResponseWriter, r *http.Request) {
 		}
 
 		w.Write([]byte("http://" + config.Server + "/post/" + id));
-*/
 		return
 	}
 
