@@ -33,7 +33,7 @@ They take the following form:
 
 name|method|args: explanation.
 
-post|POST|text: Submit a new text post. Posts are currently just plain text, but with client support I would consider accepting markdown and converting between formats as necessary. The sizes involved (relatively small) mean that a simple query parameter ?text= should be sufficient.
+post|POST|text: Submit a new text post. Posts are currently just plain text, but with client support I would consider accepting markdown and converting between formats as necessary. The sizes involved (relatively small) mean that a simple query parameter ?text= should be sufficient. Returns a blank 200 if successful.
 
 timeline|GET|max: Fetch the most recent $max posts from the user's timeline, return them in the form of a JSON array ordered in reverse-chronological (newest first) order of post objects (defined later.) If no max is given the server should choose a sane default (configurable?)
 

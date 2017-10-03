@@ -17,6 +17,7 @@ type Post struct {
 	favorites int
 	replyto string
 	datetime time.Time
+	foreign bool
 }
 
 type jsonpost struct {
@@ -24,13 +25,20 @@ type jsonpost struct {
 	Replyto string `json:"replyto"`
 }
 
+
+func NewPost(text string) Post {
+	return Post{author: config.Owner + "@" + config.Server,
+		favorites: 0,
+		post: text,
+		datetime: time.Now(),
+		replyto: "",
+		foreign: false};
+}
 func Put(dbh *sql.DB, p *Post) (string, error) {
 	// 1 in 144 quadrillion is *probably* safe
 	p.id = keyGen(10)
 
 	fmt.Println("Current id is " + p.id)
-	p.datetime = time.Now()
-	fmt.Println(p.datetime.Format(time.UnixDate));
 	post, err := Get(dbh, p.id);
 
 	// Generate a key we know is collision free just in case

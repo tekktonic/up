@@ -42,5 +42,9 @@ func main() {
 		router.Get(path, cb)
 	}
 
+	// Set up our URL handlers. See <<mapping.go>>
+	for path, cb := range postCallbacks {
+		router.Post(path, cb)
+	}
 	log.Fatal(http.ListenAndServe(":8080", router))
 }

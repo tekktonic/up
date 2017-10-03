@@ -1,10 +1,10 @@
 package main;
 
 import (
-	//	"fmt"
+//	"fmt"
 
 	"net/http"
-	"log"
+//	"log"
 	"strconv"
 	"github.com/husobee/vestigo"
 )
@@ -14,17 +14,13 @@ func TimelineCB (w http.ResponseWriter, r *http.Request) {
 
 	// If we need that big a max, something's probably misbehaving. I may change later.
 	if (err != nil || max > 1024) {
-		max = config.Max
+		max = config.TimelineSize
 	}
 
 	str := auth(r.Header.Get("X-Up-Auth"))
 	// Make sure we're allowed to look at our timeline
 	if (str == "") {
 		post := Timeline(ctx.dbh, max)
-		if (err != nil) {
-			log.Fatal(err)
-		}
-
 		for e := post.Front(); e != nil; e = e.Next(){
 			w.Write(([]byte)((e.Value.(Post)).String()))
 		}

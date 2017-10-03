@@ -11,6 +11,7 @@ type configuration struct {
 	Server string `json:"server"`
 	Key string `json:"key"`
 	Owner string `json:"owner"`
+	TimelineSize int `json:"timelinesize"`
 	Max int `json:"max"`
 }
 
