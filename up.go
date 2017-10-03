@@ -15,7 +15,6 @@ var ctx context
 
 func main() {
 
-	// Dummy right now, soon™
 	readConfig()
 	
 	dbh, err := sql.Open("sqlite3", "up.db");
@@ -27,7 +26,8 @@ func main() {
 	ctx.dbh = dbh
 	
 	router := vestigo.NewRouter()
-	
+
+	vestigo.CustomNotFoundHandlerFunc(func(w http.ResponseWriter, r *http.Request) { log.Println(r)});
 	// Set up our URL handlers. See <<mapping.go>>
 	for path, cb := range getCallbacks {
 		router.Get(path, cb)
