@@ -38,13 +38,20 @@ badauthget() {
 
 setuptest()
 {
-    mkdir testing_internal && cd testing_internal
+    mkdir testing_internal && cd testing_internal || die "Testing internal already exists, something go wrong before? Look into that."
     if [ `pgrep up` ]; then
         echo "Killing Up so we can test"
         pkill up
     fi
 
-    cp ../../config.json . || die "Unable to copy config file from `pwd`../../"
+    echo "Copying config file in..."
+    CONFIGFILE="../../test.config.json"
+    if [ ! -e $CONFIGFILE ]; then echo "No test config file"; CONFIGFILE="../../config.json"; fi
+    echo $CONFIGFILE
+    cp $CONFIGFILE . || die "Unable to copy config file from `pwd`../../"
+    echo "Generating a fresh db..."
+    ../../scripts/gendb.sh
+    
     ../../up &
     sleep 5;
 }
