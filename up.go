@@ -27,7 +27,12 @@ func main() {
 	
 	router := vestigo.NewRouter()
 
-	vestigo.CustomNotFoundHandlerFunc(func(w http.ResponseWriter, r *http.Request) { log.Println(r)});
+	vestigo.CustomNotFoundHandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		log.Println(r)
+		r.ParseForm();
+		log.Println("Headers")
+		log.Println(r.Header)
+	});
 	// Set up our URL handlers. See <<mapping.go>>
 	for path, cb := range getCallbacks {
 		router.Get(path, cb)
