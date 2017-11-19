@@ -3,6 +3,7 @@ package main
 import (
 	"container/list"
 	"database/sql"
+	"html"
 	"log"
 	"fmt"
 	"strconv"
@@ -159,4 +160,15 @@ func FromJSON(in []byte) Post {
 
 	return Post{}
 	
+}
+
+func MakeEntry(p Post) string {
+	return `<entry  xmlns="http://www.w3.org/2005/Atom" xmlns:thr="http://purl.org/syndication/thread/1.0"  xmlns:ostatus="http://ostatus.org/schema/1.0" xmlns:poco="http://portablecontacts.net/spec/1.0" xmlns:statusnet="http://status.net/schema/api/1/">
+    <id>` + config.Server + "/" + p.id + `</id>
+    <title/>
+    <content type="html">` + html.EscapeString(p.post) + `</content>
+    <published>` + p.datetime.Format("2006-01-02T15:04:05-07:00") + `</published>
+    <updated>` + p.datetime.Format("2006-01-02T15:04:05-07:00") + `</updated>
+    <statusnet:notice_info local_id="` + p.id + `" source="activity"/>
+  </entry>`
 }

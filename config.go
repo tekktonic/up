@@ -13,6 +13,8 @@ type configuration struct {
 	Owner string `json:"owner"`
 	TimelineSize int `json:"timelinesize"`
 	Max int `json:"max"`
+	DbFile string `json:"dbfile"`
+	Port string `json:"port"`
 }
 
 var config configuration;
@@ -23,8 +25,8 @@ func (c configuration) String() string {
 	 "\nOwner: " + c.Owner
 }
 
-func readConfig() {
-	confstring, err := ioutil.ReadFile("config.json")
+func readConfig(file string) {
+	confstring, err := ioutil.ReadFile(file)
 
 	if (err != nil) {
 		log.Fatal("Unable to open config file\n" + err.Error())

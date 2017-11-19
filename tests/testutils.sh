@@ -1,5 +1,5 @@
 
-set SITE=localhost:8080
+set SITE=localhost:9090
 
 check()
 {
@@ -25,6 +25,9 @@ badauthpost() {
     return curl -H "X-Up-Auth: $2" -w "%{http_version}\n" $1 -d $3=$4 2>/dev/null | tail -n 1 | grep 401
 }
 
+authpost() {
+    return curl -H "X-Up-Auth: $2" -w "%{http_version}\n" $1 -d $3=$4 2>/dev/null | tail -n 1 | grep 200
+}
 
 noauthget()
 {
@@ -35,6 +38,13 @@ badauthget() {
     return curl -H "X-Up-Auth: $2" -w "%{http_version}\n" $1 2>/dev/null | tail -n 1 | grep 401
 }
 
+authget() {
+    return curl -H "X-Up-Auth: $2" -w "%{http_version}\n" $1 2>/dev/null | tail -n 1 | grep 200
+}
+
+authgetvalue() {
+    curl -H "X-Up-Auth: $2"  $1 2>/dev/null
+}
 
 setuptest()
 {
@@ -48,11 +58,12 @@ setuptest()
     CONFIGFILE="../../test.config.json"
     if [ ! -e $CONFIGFILE ]; then echo "No test config file"; CONFIGFILE="../../config.json"; fi
     echo $CONFIGFILE
-    cp $CONFIGFILE . || die "Unable to copy config file from `pwd`../../"
+    cp $CONFIGFILE config.json || die "Unable to copy config file from `pwd`../../"
     echo "Generating a fresh db..."
-    ../../scripts/gendb.sh
+    ../../scripts/gendb.sh test.up.db
     
     ../../up &
+    echo "Up's PID is " `pgrep up`
     sleep 5;
 }
 
