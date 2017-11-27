@@ -18,6 +18,7 @@ func buildTagSelect(tag string) string {
 	return "select postid from tags where tagname = \"" + tag + "\" "
 }
 func TagCB(w http.ResponseWriter, r *http.Request) {
+	pledge()
 	tagstring := vestigo.Param(r, "tags");
 
 	log.Println(vestigo.ParamNames(r));

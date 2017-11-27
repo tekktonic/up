@@ -8,6 +8,7 @@ import (
 )
 
 func PermalinkCB (w http.ResponseWriter, r *http.Request) {
+	pledge()
 	id := vestigo.Param(r, "id")
 
 	post, err := Get(ctx.dbh, id)

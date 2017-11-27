@@ -68,7 +68,7 @@ func DistributePost(p Post) {
 	}
 }
 func PostCB (w http.ResponseWriter, r *http.Request) {
-
+	pledge()
 
 	str := auth(r.Header.Get("X-Up-Auth"))
 	// Make sure we're allowed to look at our timeline

@@ -1,10 +1,13 @@
 package main;
 
 import (
+	"log"
+	"github.com/husobee/vestigo"
 	"net/http"
 )
 
 func FavoriteCB(w http.ResponseWriter,r *http.Request) {
+	pledge()
 	dbh := ctx.dbh;
 
 	id := vestigo.Param(r, "id");
@@ -44,9 +47,9 @@ func FavoriteCB(w http.ResponseWriter,r *http.Request) {
 
 		insert.Close()
 
-		post := NewPost(config.Owner + " liked the post https://" + config.Server + "/" + id);
+		post := NewPost(config.Owner + " liked the post https://" + config.Server + "/post/" + id);
 
-		Put(config.dbh, &post);
+		Put(ctx.dbh, &post);
 
 		DistributePost(post);
 

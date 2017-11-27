@@ -19,6 +19,7 @@ type Pushstruct struct {
 }
 
 func HubCB(w http.ResponseWriter, r *http.Request) {
+	pledge();
 	log.Println("Got hit up on the hub")
 	r.ParseForm();
 

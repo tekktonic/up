@@ -14,7 +14,7 @@ import (
 
 
 func pledge() {
-	sys.Pledge("stdio inet", []string{})
+	unix.Pledge("stdio inet", []string{})
 }
 var ctx context
 

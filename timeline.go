@@ -10,6 +10,7 @@ import (
 )
 
 func TimelineCB (w http.ResponseWriter, r *http.Request) {
+	pledge()
 	max, err := strconv.Atoi(vestigo.Param(r, "max"))
 
 	// If we need that big a max, something's probably misbehaving. I may change later.

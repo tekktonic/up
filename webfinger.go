@@ -103,6 +103,7 @@ func getFeedURL(tree *xmlquery.Node) string {
 }
 
 func webfingerCB(w http.ResponseWriter, r *http.Request) {
+	pledge()
 	remote := vestigo.Param(r, "remote")
 	fmt.Println("REMOTE IS " + remote)
 	id := strings.Split(remote,"@")
@@ -141,6 +142,7 @@ func webfingerCB(w http.ResponseWriter, r *http.Request) {
 
 
 func HostMetaCB(w http.ResponseWriter, r *http.Request) {
+	pledge()
 	hostmetafile := `<?xml version="1.0" encoding="UTF-8"?>
      <XRD xmlns="http://docs.oasis-open.org/ns/xri/xrd-1.0">
         <Link rel="lrdd" type="application/xrd+xml" template="https://` + config.Server + `/.well-known/webfinger?resource={uri}"/>
@@ -150,6 +152,7 @@ func HostMetaCB(w http.ResponseWriter, r *http.Request) {
 }
 
 func WebfingerCB(w http.ResponseWriter, r *http.Request) {
+	pledge()
 	fingerfile := `<?xml version="1.0" encoding="UTF-8"?>
 <XRD xmlns="http://docs.oasis-open.org/ns/xri/xrd-1.0">
   <Subject>acct:` + config.Owner + "@" + config.Server + `</Subject>

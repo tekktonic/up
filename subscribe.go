@@ -132,6 +132,7 @@ func httpSubscribe(hub string, sub Subscription) {
 }
 
 func SubscribeCB(w http.ResponseWriter, r *http.Request) {
+	pledge()
 	fmt.Println("SubscribeCB");
 	str := auth(r.Header.Get("X-Up-Auth"))
 	if (str == "") {
@@ -152,6 +153,7 @@ func SubscribeCB(w http.ResponseWriter, r *http.Request) {
 
 
 func HubResponseCB(w http.ResponseWriter, r *http.Request) {
+	pledge()
 	id,err := strconv.Atoi(vestigo.Param(r, "id"));
 
 	fmt.Println("HubResponseCB");
@@ -246,6 +248,7 @@ func HubResponseCB(w http.ResponseWriter, r *http.Request) {
 }
 
 func RemotePostCB(w http.ResponseWriter, r *http.Request) {
+	pledge()
 	fmt.Println("Remote post")
 	id,err := strconv.Atoi(vestigo.Param(r, "id"));
 
