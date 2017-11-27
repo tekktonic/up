@@ -1,4 +1,3 @@
-
 set SITE=localhost:9090
 
 check()
@@ -43,7 +42,7 @@ authget() {
 }
 
 authgetvalue() {
-    curl -H "X-Up-Auth: $2"  $1 2>/dev/null
+    curl -q -H "X-Up-Auth: $1"  $2 # 2>/dev/null
 }
 
 setuptest()
@@ -67,6 +66,26 @@ setuptest()
     sleep 5;
 }
 
+setuptest2()
+{
+    mkdir testing_internal && cd testing_internal || die "Testing internal already exists, something go wrong before? Look into that."
+    if [ `pgrep up` ]; then
+        echo "Killing Up so we can test"
+        pkill up
+    fi
+
+    echo "Copying config file in..."
+    CONFIGFILE="../../test2.config.json"
+    if [ ! -e $CONFIGFILE ]; then echo "No test config file"; CONFIGFILE="../../config.json"; fi
+    echo $CONFIGFILE
+    cp $CONFIGFILE config.json || die "Unable to copy config file from `pwd`../../"
+    echo "Generating a fresh db..."
+    ../../scripts/gendb.sh test2.up.db
+    
+    ../../up test2.config.json &
+    echo "Up's PID is " `pgrep up`
+    sleep 5;
+}
 teardowntest()
 {
     if [ `pgrep up` ]; then

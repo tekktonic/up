@@ -9,9 +9,13 @@ import (
 	"time"
 	"math/rand"
 	"log"
+	"golang.org/x/sys/unix"
 )
 
 
+func pledge() {
+	sys.Pledge("stdio inet", []string{})
+}
 var ctx context
 
 func main() {
@@ -22,6 +26,7 @@ func main() {
 	readConfig(configfile)
 	
 	dbh, err := sql.Open("sqlite3", config.DbFile);
+
 
 	if (err != nil) {
 		log.Fatal(err)

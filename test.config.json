@@ -1,0 +1,9 @@
+{
+    "owner" : "tekk",
+    "server" : "up.tekk.in",
+    "key" : "notsecret",
+    "timelinesize" : 50,
+    "max" : 1000,
+    "dbfile" : "test.up.db",
+    "port" : "9090"
+}

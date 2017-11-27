@@ -21,6 +21,7 @@ type Subscription struct {
 	topic string
 	name string
 	challenge string
+	hub string
 	pending int
 	start int
 	time int
@@ -44,7 +45,7 @@ func genKey() string {
 func saveSubscription(hub string, finger FingerInfo) Subscription {
 	log.Println("Made it into saveSubscription")
 	dbh := ctx.dbh;
-	
+
 	id := rand.Int()
 	now, _ := strconv.Atoi(time.Now().Format(time.UnixDate))
 	ret := Subscription{
@@ -63,7 +64,7 @@ func saveSubscription(hub string, finger FingerInfo) Subscription {
 		log.Fatal(err)
 	}
 
-	insert, err := tx.Prepare("insert into subscriptions(topic, id, name, challenge, pending, lifetime, start) values(?,?,?,?,?,?,?)")
+	insert, err := tx.Prepare("insert into subscriptions(topic, id, name, challenge, pending, lifetime, start, hub) values(?,?,?,?,?,?,?,?);")
 
 	if (err != nil) {
 		log.Fatal(err)
@@ -71,7 +72,7 @@ func saveSubscription(hub string, finger FingerInfo) Subscription {
 
 	defer insert.Close()
 
-	_, err = insert.Exec(ret.topic, ret.id, ret.name, ret.challenge, ret.pending, ret.time, ret.start)
+	_, err = insert.Exec(ret.topic, ret.id, ret.name, ret.challenge, ret.pending, ret.time, ret.start, "")
 
 	if (err != nil) {
 		log.Fatal(err)
@@ -96,7 +97,7 @@ func rollbackSubscribe(id int) {
 		log.Fatal(err);
 	}
 
-	delete, err := tx.Prepare("delete from subscriptions where id=?");
+	delete, err := tx.Prepare("delete from subscriptions where id=?;");
 
 	defer delete.Close()
 
@@ -165,8 +166,10 @@ func HubResponseCB(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
 	topic := r.Form["hub.topic"][0]
 	mode := r.Form["hub.mode"][0]
-	challenge := r.Form["hub.challenge"][0]
+	challenge := r.Form.Get("hub.secret")
+	lease := r.Form.Get("hub.lease_seconds")
 
+	
 	if (mode == "subscribe") {
 		sel, err := dbh.Query("select * from subscriptions where id = ?", id)
 
@@ -175,13 +178,12 @@ func HubResponseCB(w http.ResponseWriter, r *http.Request) {
 			w.Write([]byte("Invalid callback URL"))
 			return;			
 		}
-		defer sel.Close()
 
 		var sub Subscription;
-		// If there was no error, then there was an 
+		// If there was no error, then there was an entry
 		sel.Next()
 
-		err = sel.Scan(&sub.topic, &sub.id, &sub.name, &sub.challenge, &sub.pending, &sub.time, &sub.start)
+		err = sel.Scan(&sub.topic, &sub.id, &sub.name, &sub.challenge, &sub.pending, &sub.time, &sub.start, &sub.hub)
 
 		if (err != nil) {
 			log.Fatal(err)
@@ -194,7 +196,42 @@ func HubResponseCB(w http.ResponseWriter, r *http.Request) {
 			return;
 		}
 
+
+		
 		w.Write([]byte(challenge))
+
+		sel.Close()
+		
+		tx, err := dbh.Begin()
+
+		if (err != nil) {
+			log.Fatal(err)
+		}
+
+		insert, err := tx.Prepare("update subscriptions set lifetime=?,start=? where id=?");
+		if (err != nil) {
+			log.Fatal(err)
+		}
+
+		leasetime, err := strconv.Atoi(lease)
+
+		if (err != nil) {
+			leasetime = (2 << 31) - 1
+		}
+		
+		_,err = insert.Exec(strconv.Itoa(leasetime), time.Now().Format(time.UnixDate), sub.id);
+
+		if (err != nil) {
+			log.Fatal(err)
+		}
+		
+		err = tx.Commit()
+
+		if (err != nil) {
+			log.Fatal(err)
+		}
+
+		defer insert.Close();
 		return;
 	} else if (mode == "unsubscribe") {
 		w.WriteHeader(400);
@@ -228,12 +265,10 @@ func RemotePostCB(w http.ResponseWriter, r *http.Request) {
 		return;			
 	}
 
-	
 
 	if (!sel.Next()) {
 		fmt.Println("Next failed")
 		return;
-		log.Fatal(sel.Err())
 	}
 	
 	fmt.Println("Got next")
@@ -253,8 +288,8 @@ func RemotePostCB(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("Parsed body")
 	text := xmlquery.FindOne(tree, "//feed/entry/content").InnerText()
 	fmt.Println(tree);
-	datetime, err := time.Parse("2006-01-02T15:04:05-07:00",
-		xmlquery.FindOne(tree, "//feed/entry/published").InnerText())
+/*	datetime, err := time.Parse("2006-01-02T15:04:05-07:00",
+		xmlquery.FindOne(tree, "//feed/entry/published").InnerText())*/
 
 	if (err != nil) {
 		log.Fatal(err)
@@ -262,7 +297,7 @@ func RemotePostCB(w http.ResponseWriter, r *http.Request) {
 	
 	post := Post{post: text, replyto: "", foreign: true, favorites: 0,
 		author: name,
-		datetime: datetime}
+		datetime: time.Now()}
 
 	fmt.Println("Closing sel")
 	sel.Close();

@@ -7,6 +7,7 @@ import (
 	"log"
 	"fmt"
 	"strconv"
+	"strings"
 	"time"
 	"encoding/json"
 )
@@ -19,6 +20,7 @@ type Post struct {
 	replyto string
 	datetime time.Time
 	foreign bool
+	tags []string
 }
 
 type jsonpost struct {
@@ -28,12 +30,21 @@ type jsonpost struct {
 
 
 func NewPost(text string) Post {
-	return Post{author: config.Owner + "@" + config.Server,
+	ret := Post{author: config.Owner + "@" + config.Server,
 		favorites: 0,
 		post: text,
 		datetime: time.Now(),
 		replyto: "",
 		foreign: false};
+
+
+	for _,w := range (strings.Split(text, " ")) {
+		// This is safe because the strings are UTF8
+		if w[0] == '#' {
+			ret.tags = append(ret.tags, w);
+		}
+	}
+	return ret;
 }
 func Put(dbh *sql.DB, p *Post) (string, error) {
 	// 1 in 144 quadrillion is *probably* safe
@@ -42,6 +53,7 @@ func Put(dbh *sql.DB, p *Post) (string, error) {
 	fmt.Println("Current id is " + p.id)
 	post, err := Get(dbh, p.id);
 
+	fmt.Println("Escaped our check");
 	// Generate a key we know is collision free just in case
 	for (post != nil) {
 		p.id = keyGen(10)
@@ -59,9 +71,8 @@ func Put(dbh *sql.DB, p *Post) (string, error) {
 		log.Fatal(err);
 	}
 
-	defer insert.Close()
 
-
+	log.Println("Inserting new post " + p.id + " into database");
 	_, err = insert.Exec(p.id, p.author, p.post, p.favorites, p.replyto, p.datetime.Format(time.UnixDate))
 
 	if (err != nil) {
@@ -69,11 +80,44 @@ func Put(dbh *sql.DB, p *Post) (string, error) {
 	}
 
 	err = tx.Commit()
+
 	
 	if (err != nil) {
 		log.Fatal(err);
 	}
 
+
+	insert.Close();
+
+	tx, err = dbh.Begin();
+	if (err != nil) {
+		log.Fatal(err);
+	}
+
+
+	for _,tag := range p.tags {
+		insert, err = tx.Prepare("insert into tags(postid, tagname) values(?,?)")
+
+		if (err != nil) {
+			log.Fatal(err);
+		}
+
+		defer insert.Close()
+
+
+		_, err = insert.Exec(p.id, tag);
+
+		if (err != nil) {
+			log.Fatal(err);
+		}
+
+		err = tx.Commit()
+		
+		if (err != nil) {
+			log.Fatal(err);
+		}
+	}
+	
 	return p.id, nil;
 }
 
@@ -82,11 +126,11 @@ func Get(dbh *sql.DB, id string) (*Post, error) {
 	sel, err := dbh.Query("select * from posts where id = ?", id)
 
 	if (err != nil) {
+		log.Println("First")
+		log.Fatal(err)
 		return nil, NewUpError("Unable to retrieve post")
 	}
 
-	defer sel.Close();
-	
 	var ret Post
 
 	// Safe, selected on primary key
@@ -99,6 +143,33 @@ func Get(dbh *sql.DB, id string) (*Post, error) {
 		return nil, NewUpError("Unable to retrieve post")
 	}
 	ret.datetime, _ = time.Parse(time.UnixDate, stringtime)
+	sel.Close()
+
+	
+	sel, err = dbh.Query("select tagname from tags where postid = ?", id)
+
+	if (err != nil) {
+		log.Println("Tag retrieval initial")
+		log.Fatal(err)
+		return nil, NewUpError("Unable to retrieve post")
+	}
+
+	defer sel.Close();
+	
+
+	// Safe, selected on primary key
+	for sel.Next() {
+		var tag string
+		err = sel.Scan(&tag)
+
+		if (err != nil) {
+			log.Println("Something went wrong in tag application")
+			log.Fatal(err);
+			return nil, NewUpError("Unable to retrieve post")
+		}
+
+		ret.tags = append(ret.tags, tag);
+	}
 
 	return &ret, nil
 }
@@ -113,7 +184,6 @@ func Timeline(dbh *sql.DB, max int) *list.List {
 		log.Fatal("Something went horribly wrong in retrieving the timeline")
 	}
 
-	defer sel.Close()
 
 	for sel.Next() {
 		var item Post
@@ -125,12 +195,41 @@ func Timeline(dbh *sql.DB, max int) *list.List {
 			log.Fatal("Database somehow corrupted")
 		}
 
+		
+
 		item.datetime, _ = time.Parse(time.UnixDate, stringtime)
 
 		// Have things in reverse order so that when we print them the most recent is at the bottom
 		ret.PushFront(item)
 	}
 
+	sel.Close()
+
+	// Build the tags for our selection
+	for e := ret.Front(); e != nil; e = e.Next() {
+		post := e.Value.(Post)
+		
+		sel, err = dbh.Query("select tagname from tags where postid = ?", post.id)
+
+		if (err != nil) {
+			return nil
+		}
+
+		defer sel.Close();
+		
+
+		// Safe, selected on primary key
+		for sel.Next() {
+			var tag string
+			err = sel.Scan(&tag)
+
+			if (err != nil) {
+				return nil
+			}
+
+			post.tags = append(post.tags, tag);
+		}
+	}
 	return ret
 }
 
@@ -172,3 +271,9 @@ func MakeEntry(p Post) string {
     <statusnet:notice_info local_id="` + p.id + `" source="activity"/>
   </entry>`
 }
+
+type ByTime []Post
+
+func (t ByTime) Len() int {return len(t)}
+func (t ByTime) Swap(i, j int)      { t[i], t[j] = t[j], t[i] }
+func (t ByTime) Less(i, j int) bool { return t[i].datetime.Before(t[j].datetime) }
