@@ -53,5 +53,7 @@ func main() {
 	for path, cb := range postCallbacks {
 		router.Post(path, cb)
 	}
+
+	unix.Chroot(".")
 	log.Fatal(http.ListenAndServe(":" + config.Port, router))
 }
