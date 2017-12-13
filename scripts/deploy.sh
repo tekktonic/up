@@ -1,7 +1,5 @@
 #!/bin/sh
-
 SCRIPTSDIR=`dirname $0`
-
 ECHO=`which echo`
 $ECHO "Time to get things up and running"
 
@@ -39,3 +37,5 @@ EOF
 
 # Grab dependencies and generate our database.
 $SCRIPTSDIR/dependencies.sh && $SCRIPTSDIR/gendb.sh $DBFILE
+
+go build

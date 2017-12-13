@@ -1,9 +1,9 @@
 -- Pretty sure that at the moment this is all we need for local.
-create table posts (id string primary key, author string, post string, favorites integer, replyto string, datetime string);
+create table posts (id string primary key, author string, post string, favorites integer, replyto string, datetime int);
 create table tags (postid string, tagname string key, foreign key (postid) references posts(id), primary key (postid, tagname));
 
 -- These actually aren't temporary; occasionally they'll want to reverify our intent to purge
--- old entries theoretically. I on't think any software actually does though.
+-- old entries theoretically. I don't think any software actually does though.
 create table subscriptions (topic string, id int primary key, name string, challenge string, pending int, lifetime int, start int, hub string);
 
 

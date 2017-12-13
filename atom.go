@@ -22,7 +22,7 @@ func GenTimeline(w http.ResponseWriter, r *http.Request) {
 <feed xmlns="http://www.w3.org/2005/Atom" xmlns:thr="http://purl.org/syndication/thread/1.0"  xmlns:media="http://purl.org/syndication/atommedia" xmlns:poco="http://portablecontacts.net/spec/1.0" xmlns:ostatus="http://ostatus.org/schema/1.0" xmlns:statusnet="http://status.net/schema/api/1/" xml:lang="en-US">
   <generator uri="https://tekk.in/up" version="0.1.0">Up</generator>
   <id>https://` + config.Server + `/timeline.atom</id>
-  <title>` + config.Owner + ` timeline</title>
+  <title>` + config.Owner + `'s timeline</title>
   <subtitle>Updates from ` + config.Owner + ` on ` + config.Server + `</subtitle>
   <updated>` + dt + `</updated>
   <author>

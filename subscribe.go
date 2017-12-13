@@ -23,8 +23,8 @@ type Subscription struct {
 	challenge string
 	hub string
 	pending int
-	start int
-	time int
+	start int64
+	time int64
 }
 
 func genKey() string {
@@ -47,7 +47,7 @@ func saveSubscription(hub string, finger FingerInfo) Subscription {
 	dbh := ctx.dbh;
 
 	id := rand.Int()
-	now, _ := strconv.Atoi(time.Now().Format(time.UnixDate))
+	now := time.Now().Unix()
 	ret := Subscription{
 		id: id,
 		topic: finger.atomfeed,
@@ -63,7 +63,7 @@ func saveSubscription(hub string, finger FingerInfo) Subscription {
 	if (err != nil) {
 		log.Fatal(err)
 	}
-
+	fmt.Println("Preparing to insert...")
 	insert, err := tx.Prepare("insert into subscriptions(topic, id, name, challenge, pending, lifetime, start, hub) values(?,?,?,?,?,?,?,?);")
 
 	if (err != nil) {
@@ -71,7 +71,7 @@ func saveSubscription(hub string, finger FingerInfo) Subscription {
 	}
 
 	defer insert.Close()
-
+	fmt.Println("Executing insert...")
 	_, err = insert.Exec(ret.topic, ret.id, ret.name, ret.challenge, ret.pending, ret.time, ret.start, "")
 
 	if (err != nil) {
@@ -84,6 +84,7 @@ func saveSubscription(hub string, finger FingerInfo) Subscription {
 		log.Fatal(err)
 	}
 
+	fmt.Println("Got to end");
 	return ret;
 }
 
@@ -233,7 +234,7 @@ func HubResponseCB(w http.ResponseWriter, r *http.Request) {
 			log.Fatal(err)
 		}
 
-		defer insert.Close();
+		insert.Close();
 		return;
 	} else if (mode == "unsubscribe") {
 		w.WriteHeader(400);
@@ -263,6 +264,8 @@ func RemotePostCB(w http.ResponseWriter, r *http.Request) {
 	sel, err := dbh.Query("select name from subscriptions where id = ?", id)
 	fmt.Println("Did query")
 	if (err != nil) {
+
+		fmt.Println(r);
 		w.WriteHeader(400);
 		w.Write([]byte("Invalid callback URL"))
 		return;			

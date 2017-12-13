@@ -34,7 +34,7 @@ type FingerInfo struct {
 //	salmon string;
 	feed string;
 }
-
+ 
 func getAtomFeed(feedurl string) string {
 	// Yes, Get follows redirects.
 	resp, _ := http.Get(feedurl)
@@ -143,6 +143,7 @@ func webfingerCB(w http.ResponseWriter, r *http.Request) {
 
 func HostMetaCB(w http.ResponseWriter, r *http.Request) {
 	pledge()
+	fmt.Println("Serving host-meta");
 	hostmetafile := `<?xml version="1.0" encoding="UTF-8"?>
      <XRD xmlns="http://docs.oasis-open.org/ns/xri/xrd-1.0">
         <Link rel="lrdd" type="application/xrd+xml" template="https://` + config.Server + `/.well-known/webfinger?resource={uri}"/>
@@ -153,6 +154,7 @@ func HostMetaCB(w http.ResponseWriter, r *http.Request) {
 
 func WebfingerCB(w http.ResponseWriter, r *http.Request) {
 	pledge()
+	fmt.Println("Serving webfinger " + r.URL.String());
 	fingerfile := `<?xml version="1.0" encoding="UTF-8"?>
 <XRD xmlns="http://docs.oasis-open.org/ns/xri/xrd-1.0">
   <Subject>acct:` + config.Owner + "@" + config.Server + `</Subject>

@@ -30,6 +30,8 @@ type jsonpost struct {
 
 
 func NewPost(text string) Post {
+	text = strings.Replace(text, "\n", " ", -1)
+	
 	ret := Post{author: config.Owner + "@" + config.Server,
 		favorites: 0,
 		post: text,
@@ -72,8 +74,8 @@ func Put(dbh *sql.DB, p *Post) (string, error) {
 	}
 
 
-	log.Println("Inserting new post " + p.id + " into database");
-	_, err = insert.Exec(p.id, p.author, p.post, p.favorites, p.replyto, p.datetime.Format(time.UnixDate))
+	log.Println("Inserting new post " + p.id + " into database at " + strconv.FormatInt(p.datetime.Unix(),10));
+	_, err = insert.Exec(p.id, p.author, p.post, p.favorites, p.replyto, p.datetime.Unix())
 
 	if (err != nil) {
 		log.Fatal(err);
@@ -135,14 +137,16 @@ func Get(dbh *sql.DB, id string) (*Post, error) {
 
 	// Safe, selected on primary key
 	sel.Next()
-	var stringtime string
+	var stringtime int64
 	err = sel.Scan(&ret.id, &ret.author, &ret.post,
 		&ret.favorites, &ret.replyto, &stringtime)
 
 	if (err != nil) {
 		return nil, NewUpError("Unable to retrieve post")
 	}
-	ret.datetime, _ = time.Parse(time.UnixDate, stringtime)
+	fmt.Println("Stringtime is " + strconv.FormatInt(stringtime,10))
+	ret.datetime = time.Unix(stringtime, 0)
+	fmt.Println("Datetime is " + strconv.FormatInt(ret.datetime.Unix(),10));
 	sel.Close()
 
 	
@@ -187,7 +191,7 @@ func Timeline(dbh *sql.DB, max int) *list.List {
 
 	for sel.Next() {
 		var item Post
-		var stringtime string
+		var stringtime int64
 		err = sel.Scan(&item.id, &item.author, &item.post,
 			&item.favorites, &item.replyto, &stringtime)
 
@@ -197,7 +201,7 @@ func Timeline(dbh *sql.DB, max int) *list.List {
 
 		
 
-		item.datetime, _ = time.Parse(time.UnixDate, stringtime)
+		item.datetime = time.Unix(stringtime,0)
 
 		// Have things in reverse order so that when we print them the most recent is at the bottom
 		ret.PushFront(item)
@@ -241,7 +245,7 @@ func (p Post) String() string {
 	if (p.replyto == "") {
 		part2ret = partret + p.replyto + "\r\n"
 	} else {
-		part2ret = partret
+		part2ret = partret + "[in reply to nobody]"
 	}
 
 	ret = part2ret + "\r\n" + p.post + "\r\n\r\n"
